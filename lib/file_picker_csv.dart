@@ -39,52 +39,51 @@ class _BulkUploadState extends State<BulkUpload> {
           ),
           _data.isNotEmpty
               ? Expanded(
-            child: ListView.builder(
-              itemCount: _data.length,
-              itemBuilder: (_, index) {
-
-                return Card(
-                  margin: const EdgeInsets.all(3),
-                  color: index == 0 ? Colors.amber : Colors.white,
-                  child: ListTile(
-                    leading: Text(
-                      _data[index][0].toString(),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: index == 0 ? 18 : 15,
-                        fontWeight: index == 0
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        color: index == 0 ? Colors.red : Colors.black,
-                      ),
-                    ),
-                    title: Text(
-                      _data[index][3].toString(),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: index == 0 ? 18 : 15,
-                        fontWeight: index == 0
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        color: index == 0 ? Colors.red : Colors.black,
-                      ),
-                    ),
-                    trailing: Text(
-                      _data[index][4].toString(),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: index == 0 ? 18 : 15,
-                        fontWeight: index == 0
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        color: index == 0 ? Colors.red : Colors.black,
-                      ),
-                    ),
+                  child: ListView.builder(
+                    itemCount: _data.length,
+                    itemBuilder: (_, index) {
+                      return Card(
+                        margin: const EdgeInsets.all(3),
+                        color: index == 0 ? Colors.amber : Colors.white,
+                        child: ListTile(
+                          leading: Text(
+                            _data[index][0].toString(),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: index == 0 ? 18 : 15,
+                              fontWeight: index == 0
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: index == 0 ? Colors.red : Colors.black,
+                            ),
+                          ),
+                          title: Text(
+                            _data[index][3].toString(),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: index == 0 ? 18 : 15,
+                              fontWeight: index == 0
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: index == 0 ? Colors.red : Colors.black,
+                            ),
+                          ),
+                          trailing: Text(
+                            _data[index][4].toString(),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: index == 0 ? 18 : 15,
+                              fontWeight: index == 0
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: index == 0 ? Colors.red : Colors.black,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-          )
+                )
               : const Text("No Data Uploaded"),
           ElevatedButton(
             onPressed: () async {
@@ -104,6 +103,19 @@ class _BulkUploadState extends State<BulkUpload> {
             },
             child: const Text("Iterate Data"),
           ),
+          ElevatedButton(
+            onPressed: () async {
+              if (_data.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("No data to convert Json.")),
+                );
+                return;
+              }
+              convertCsvToJson(_data);
+            },
+            child: const Text("Convert Json"),
+          ),
+
         ],
       ),
     );
@@ -148,4 +160,85 @@ class _BulkUploadState extends State<BulkUpload> {
     }
   }
 
+  // Separate function to convert CSV to JSON
+  void convertCsvToJson(List<List<dynamic>> csvData) {
+    List<SaleData> saleDataList = [];
+
+    // Skipping the header row (index 0) and converting CSV rows into SaleData
+    for (var row in csvData.skip(1)) {
+      saleDataList.add(SaleData.fromCsv(row));
+    }
+
+    // Convert SaleData list to JSON format
+    List<String> jsonData =
+        saleDataList.map((data) => jsonEncode(data.toJson())).toList();
+
+    // Output JSON data (you can return or do other processing here)
+    for (var json in jsonData) {
+      print(json); // You can replace this with any other functionality you need
+    }
+  }
+}
+
+// Sale Data Model Class
+class SaleData {
+  final String orderId;
+  final String productName;
+  final int quantityOrdered;
+  final double priceEach;
+  final String orderDate;
+  final String purchaseAddress;
+  final String paymentMethod;
+  final String productId;
+  final String customerId;
+  final String customerName;
+
+  SaleData({
+    required this.orderId,
+    required this.productName,
+    required this.quantityOrdered,
+    required this.priceEach,
+    required this.orderDate,
+    required this.purchaseAddress,
+    required this.paymentMethod,
+    required this.productId,
+    required this.customerId,
+    required this.customerName,
+  });
+
+  // Factory constructor to create SaleData from CSV row
+  factory SaleData.fromCsv(List<dynamic> csvRow) {
+    // Make sure row has the expected number of columns
+    if (csvRow.length < 10) {
+      throw Exception('Invalid CSV row: ${csvRow.join(', ')}');
+    }
+    return SaleData(
+      orderId: csvRow[0].toString(),
+      productName: csvRow[1].toString(),
+      quantityOrdered: int.tryParse(csvRow[2].toString()) ?? 0,
+      priceEach: double.tryParse(csvRow[3].toString()) ?? 0.0,
+      orderDate: csvRow[4].toString(),
+      purchaseAddress: csvRow[5].toString(),
+      paymentMethod: csvRow[6].toString(),
+      productId: csvRow[7].toString(),
+      customerId: csvRow[8].toString(),
+      customerName: csvRow[9].toString(),
+    );
+  }
+
+  // Convert SaleData to JSON format
+  Map<String, dynamic> toJson() {
+    return {
+      'orderId': orderId,
+      'productName': productName,
+      'quantityOrdered': quantityOrdered,
+      'priceEach': priceEach,
+      'orderDate': orderDate,
+      'purchaseAddress': purchaseAddress,
+      'paymentMethod': paymentMethod,
+      'productId': productId,
+      'customerId': customerId,
+      'customerName': customerName,
+    };
+  }
 }
